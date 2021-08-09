@@ -35,7 +35,6 @@ func parseBody(w http.ResponseWriter, r *http.Request) ([]string, error) {
 
 func makeRequests(urls []string) (map[string]string, error) {
 	respMap := make(map[string]string)
-	time.Sleep(15 * time.Second)
 	for _, url := range urls {
 		ctx := context.Background()
 		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(1*time.Second))
@@ -92,7 +91,16 @@ func maxClientsMiddleware(h http.Handler, n int) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sema <- struct{}{}
 		defer func() { <-sema }()
+		// Cancellation
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		go func(done <-chan struct{}, cancel context.CancelFunc) {
+			<-done
+			fmt.Println("request got cancelled")
+			cancel()
+		}(r.Context().Done(), cancel)
 
+		r = r.WithContext(ctx)
 		h.ServeHTTP(w, r)
 	})
 }

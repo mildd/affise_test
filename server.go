@@ -52,7 +52,7 @@ func GetInfo(w http.ResponseWriter, r *http.Request) {
 func Serve(ctx context.Context) (err error) {
 
 	mux := http.NewServeMux()
-	mux.Handle("/", maxClientsMiddleware(http.HandlerFunc(GetInfo), 100))
+	mux.Handle("/get_info", maxClientsMiddleware(http.HandlerFunc(GetInfo), 100))
 
 	srv := &http.Server{
 		Addr:    ":8081",
